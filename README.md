@@ -22,50 +22,66 @@ The Parallel Agent Framework (PAF) enables you to decompose complex tasks into 3
 
 After installing PAF commands (see Installation above):
 
-### 1. Initialize PAF in Your Project
+### Option 1: Auto-Planned Setup (Recommended) ⚡ NEW!
 
 ```bash
 cd ~/your-project
-paf-init
+
+# 1. Create PLAN.md with your task description
+cat > PLAN.md << 'EOF'
+# PLAN: Add User Authentication
+## Goal
+Implement login, logout, and session management...
+EOF
+
+# 2. Auto-generate PAF setup (creates 5-15 agents automatically!)
+paf-plan PLAN.md
+
+# 3. Review generated files
+cat .paf/AGENT_CHARTER.md
+
+# 4. Execute waves (check charter for agent IDs)
+paf-spawn "Wave 1" A1 A2 A3 A4
+paf-status
+paf-spawn "Wave 2" A5 A6
+paf-validate
+
+# 5. Synthesize results
+cat .paf/findings/*.md
 ```
 
-This creates `.paf/` directory with templates.
+**Time saved:** 20-30 minutes vs manual setup!
+**See:** [docs/AUTO_PLANNING.md](./docs/AUTO_PLANNING.md) for detailed guide
 
-### 2. Define Your Agents
+### Option 2: Manual Setup (Traditional)
 
-Edit `.paf/AGENT_CHARTER.md`:
-```markdown
+```bash
+cd ~/your-project
+
+# 1. Initialize PAF
+paf-init
+
+# 2. Define your agents
+# Edit .paf/AGENT_CHARTER.md:
 ## Agent Roster
 ### Wave 1
 | Agent ID | Role | Task | Timeout |
 |----------|------|------|---------|
 | A1 | Analyzer | Analyze database schema | 15min |
 | A2 | Reviewer | Review API endpoints | 15min |
-```
 
-### 3. Create Agent Prompts
+# 3. Create agent prompts
+# Create .paf/prompts/AGENT_A1_PROMPT.md using template
 
-Create `.paf/prompts/AGENT_A1_PROMPT.md` using the provided template.
-
-### 4. Execute Waves
-
-```bash
-# Wave 1 (parallel)
+# 4. Execute waves
 paf-spawn "Wave 1" A1 A2
-
-# Check status
 paf-status
-
-# Wave 2 (after Wave 1)
 paf-spawn "Wave 2" A3
-
-# Validate all findings
 paf-validate
+
+# 5. Synthesize results
+cat .paf/findings/*.md
 ```
-
-### 5. Synthesize Results
-
-Read findings in `.paf/findings/` and create your final implementation plan.
 
 **Complete workflow example:** See [INSTALL.md](./INSTALL.md#complete-workflow-example)
 
@@ -183,6 +199,7 @@ paf-init
 
 This installs these commands system-wide:
 - `paf-init` - Initialize PAF in current directory
+- `paf-plan` - **NEW!** Auto-generate PAF setup from PLAN.md
 - `paf-spawn` - Spawn agent waves
 - `paf-status` - Check completion status
 - `paf-validate` - Validate findings
@@ -194,6 +211,7 @@ See [INSTALL.md](./INSTALL.md) for detailed installation guide.
 
 ## 📚 Documentation
 
+- **[AUTO_PLANNING.md](./docs/AUTO_PLANNING.md)** - ⚡ NEW! Auto-generate PAF setup guide
 - **[FRAMEWORK.md](./FRAMEWORK.md)** - Complete framework specification
 - **[EXAMPLES.md](./EXAMPLES.md)** - Real-world usage examples
 - **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - Design patterns and decisions
