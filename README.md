@@ -20,66 +20,54 @@ The Parallel Agent Framework (PAF) enables you to decompose complex tasks into 3
 
 ## 📖 Quick Start
 
-### 1. Copy Framework to Your Project
+After installing PAF commands (see Installation above):
+
+### 1. Initialize PAF in Your Project
 
 ```bash
-# In your project root
-mkdir .paf
-cp /path/to/parallel-agent-framework/FRAMEWORK.md ./PARALLEL_AGENT_FRAMEWORK.md
-cp -r /path/to/parallel-agent-framework/templates .paf/
+cd ~/your-project
+paf-init
 ```
 
-### 2. Create Your Agent Charter
+This creates `.paf/` directory with templates.
+
+### 2. Define Your Agents
 
 Edit `.paf/AGENT_CHARTER.md`:
 ```markdown
-# Agent Charter: [Your Task Name]
-
-## Mission
-[Define your overall goal]
-
 ## Agent Roster
+### Wave 1
 | Agent ID | Role | Task | Timeout |
 |----------|------|------|---------|
-| A1 | [Role] | [Specific task] | 15min |
-| A2 | [Role] | [Specific task] | 20min |
-...
+| A1 | Analyzer | Analyze database schema | 15min |
+| A2 | Reviewer | Review API endpoints | 15min |
 ```
 
-### 3. Define Dependencies
+### 3. Create Agent Prompts
 
-Edit `.paf/DEPENDENCY_DAG.md`:
-```markdown
-## Wave 1 (Independent)
-- A1: [Task] (no dependencies)
-- A2: [Task] (no dependencies)
+Create `.paf/prompts/AGENT_A1_PROMPT.md` using the provided template.
 
-## Wave 2 (Dependent)
-- A3: [Task] (depends on A1, A2)
-```
-
-### 4. Create Agent Prompts
-
-Use the template in `templates/AGENT_PROMPT_TEMPLATE.md` to create:
-- `.paf/prompts/AGENT_A1_PROMPT.md`
-- `.paf/prompts/AGENT_A2_PROMPT.md`
-- etc.
-
-### 5. Execute Waves
+### 4. Execute Waves
 
 ```bash
 # Wave 1 (parallel)
-timeout 900 claude -p "$(cat .paf/prompts/AGENT_A1_PROMPT.md)" > .paf/findings/A1_FINDINGS.md 2>&1 &
-timeout 900 claude -p "$(cat .paf/prompts/AGENT_A2_PROMPT.md)" > .paf/findings/A2_FINDINGS.md 2>&1 &
-wait
+paf-spawn "Wave 1" A1 A2
 
-# Wave 2 (after Wave 1 completes)
-timeout 900 claude -p "$(cat .paf/prompts/AGENT_A3_PROMPT.md)" > .paf/findings/A3_FINDINGS.md 2>&1
+# Check status
+paf-status
+
+# Wave 2 (after Wave 1)
+paf-spawn "Wave 2" A3
+
+# Validate all findings
+paf-validate
 ```
 
-### 6. Synthesize Results
+### 5. Synthesize Results
 
-Read all `.paf/findings/*.md` files, validate format, merge insights, create final plan.
+Read findings in `.paf/findings/` and create your final implementation plan.
+
+**Complete workflow example:** See [INSTALL.md](./INSTALL.md#complete-workflow-example)
 
 ---
 
@@ -178,22 +166,29 @@ A1, A2, A3  →   A4, A5      →   A6
 
 ## 🛠️ Installation
 
-### Option 1: Clone Repository
+### Quick Install (Recommended)
+
 ```bash
-cd /home/nick/Workspace
+# 1. Clone repository
 git clone https://github.com/[username]/parallel-agent-framework.git
+cd parallel-agent-framework
+
+# 2. Install PAF commands to PATH
+./install.sh
+
+# 3. Start using PAF in any project
+cd ~/your-project
+paf-init
 ```
 
-### Option 2: Download Framework Only
-```bash
-curl -O https://raw.githubusercontent.com/[username]/parallel-agent-framework/main/FRAMEWORK.md
-```
+This installs these commands system-wide:
+- `paf-init` - Initialize PAF in current directory
+- `paf-spawn` - Spawn agent waves
+- `paf-status` - Check completion status
+- `paf-validate` - Validate findings
+- `paf-clean` - Clean execution artifacts
 
-### Option 3: Use Template Generator
-```bash
-cd your-project
-/path/to/parallel-agent-framework/scripts/init_paf.sh
-```
+See [INSTALL.md](./INSTALL.md) for detailed installation guide.
 
 ---
 
