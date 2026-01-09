@@ -16,6 +16,7 @@ Usage:
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -195,49 +196,136 @@ def create_planner_prompt(plan_path, project_dir, framework_root):
     )
 
 
-def run_planner_agent(prompt_path, output_file, timeout=1800):
-    """Run the planner agent using Claude Code CLI."""
+def check_claude_available():
+    """Check if claude command is available."""
+    if not shutil.which('claude'):
+        print("❌ Error: 'claude' command not found")
+        print()
+        print("The PAF auto-planner requires Claude Code CLI.")
+        print("Install it from: https://claude.ai/code")
+        print()
+        return False
+    return True
+
+
+def run_planner_agent(prompt_path, output_file, timeout=1800, interactive=False, live=False):
+    """Run the planner agent using Claude Code CLI.
+
+    Args:
+        prompt_path: Path to the planner prompt file
+        output_file: Where to save the output
+        timeout: Max time to wait (seconds)
+        interactive: If True, run interactively (user can respond to prompts)
+        live: If True, stream output in real-time to terminal
+    """
     try:
         print("🤖 Spawning planner agent...")
+        mode_desc = "Interactive" if interactive else ("Live" if live else "Automated")
+        print(f"   Mode: {mode_desc}")
         print(f"   Timeout: {timeout}s ({timeout//60} minutes)")
-        print(f"   Output: {output_file}")
+        if not interactive and not live:
+            print(f"   Output: {output_file}")
         print()
+
+        if interactive:
+            print("⚠️  IMPORTANT: Running in interactive mode")
+            print("   You may need to approve file read/write permissions")
+            print("   The agent will ask before reading files or making changes")
+            print()
+        elif live:
+            print("📡 Live output mode - streaming agent activity in real-time")
+            print("   You'll see everything the agent thinks and does")
+            print("   Press Ctrl+C to cancel if needed")
+            print()
+            print("="*60)
+            print()
 
         # Read the prompt
         with open(prompt_path, 'r') as f:
             prompt = f.read()
 
         # Run claude with the prompt
-        cmd = [
-            'claude',
-            '-p', prompt
-        ]
-
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=output_file.parent.parent  # Run in project directory
-        )
-
-        # Write output to file
-        with open(output_file, 'w') as f:
-            f.write(result.stdout)
-            if result.stderr:
-                f.write("\n\n--- STDERR ---\n")
-                f.write(result.stderr)
-
-        if result.returncode == 0:
-            print("✅ Planner agent completed successfully!")
-            return True
+        # Use --dangerously-skip-permissions for automated mode to prevent hanging
+        if interactive:
+            cmd = [
+                'claude',
+                '-p', prompt
+            ]
         else:
-            print(f"⚠️  Planner agent exited with code {result.returncode}")
-            print(f"   Check output file: {output_file}")
-            return False
+            cmd = [
+                'claude',
+                '--dangerously-skip-permissions',
+                '-p', prompt
+            ]
+
+        if interactive or live:
+            # Interactive/Live mode: stream output to terminal in real-time
+            result = subprocess.run(
+                cmd,
+                timeout=timeout,
+                cwd=output_file.parent.parent
+            )
+
+            if result.returncode == 0:
+                print()
+                print("="*60)
+                print("✅ Planner agent completed successfully!")
+                return True
+            else:
+                print()
+                print("="*60)
+                print(f"⚠️  Planner agent exited with code {result.returncode}")
+                return False
+        else:
+            # Automated mode: capture output silently
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                cwd=output_file.parent.parent
+            )
+
+            # Write output to file
+            with open(output_file, 'w') as f:
+                f.write(result.stdout)
+                if result.stderr:
+                    f.write("\n\n--- STDERR ---\n")
+                    f.write(result.stderr)
+
+            if result.returncode == 0:
+                print("✅ Planner agent completed successfully!")
+                return True
+            else:
+                print(f"⚠️  Planner agent exited with code {result.returncode}")
+                print(f"   Check output file: {output_file}")
+
+                # Show stderr if available
+                if result.stderr:
+                    print()
+                    print("Error output:")
+                    print(result.stderr[:500])  # First 500 chars
+                    if len(result.stderr) > 500:
+                        print("   ... (truncated)")
+
+                return False
 
     except subprocess.TimeoutExpired:
         print(f"⏱️  Planner agent timed out after {timeout}s")
+        print()
+        print("💡 Possible causes:")
+        print("   - Agent stuck waiting for permission prompts")
+        print("   - Task is too complex")
+        print("   - Network issues")
+        print()
+        print("Try running with --interactive mode to see what's happening:")
+        print(f"   paf-plan PLAN.md --interactive")
+        return False
+    except FileNotFoundError:
+        print("❌ Error: 'claude' command not found")
+        print()
+        print("The PAF auto-planner requires Claude Code CLI.")
+        print("Install it from: https://claude.ai/code")
         return False
     except Exception as e:
         print(f"❌ Error running planner agent: {e}")
@@ -263,6 +351,16 @@ def main():
         help="Only create the prompt, don't run the agent"
     )
     parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Run agent interactively (allows responding to permission prompts)"
+    )
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        help="Stream agent output in real-time (see what it's thinking/doing)"
+    )
+    parser.add_argument(
         "--timeout",
         type=int,
         default=1800,
@@ -280,6 +378,10 @@ def main():
     project_dir = Path(args.project_dir).resolve()
     if not project_dir.exists():
         print(f"❌ Error: Project directory not found: {project_dir}")
+        sys.exit(1)
+
+    # Check if claude is available
+    if not check_claude_available():
         sys.exit(1)
 
     # Get framework root
@@ -330,7 +432,13 @@ def main():
     print()
 
     output_file = paf_dir / "PLANNER_OUTPUT.md"
-    success = run_planner_agent(planner_prompt_path, output_file, args.timeout)
+    success = run_planner_agent(
+        planner_prompt_path,
+        output_file,
+        args.timeout,
+        args.interactive,
+        args.live
+    )
 
     print()
     print("="*60)

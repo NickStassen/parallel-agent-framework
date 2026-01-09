@@ -6,19 +6,40 @@
 
 ## 🎯 Choose Your Path
 
-### Path 1: Auto-Planned (Fastest) ⚡
+### Path 1: Fully Automated (Fastest!) ⚡⚡
 
-**Use when:** You have a clear task description and want AI to set up everything
+**Use when:** You want complete automation from PLAN.md to results
 
 ```bash
 # 1. Write PLAN.md
 echo "# PLAN: Your Task Here..." > PLAN.md
 
 # 2. Auto-generate setup (5-10 min)
-paf-plan PLAN.md
+paf-plan PLAN.md --live
 
-# 3. Execute
-paf-spawn "Wave 1" A1 A2 A3  # Check .paf/AGENT_CHARTER.md for agent IDs
+# 3. Auto-execute all waves (completely automated!)
+paf-auto --live
+
+# Done! Check results
+paf-validate
+```
+
+### Path 2: Semi-Automated (Some Control) ⚡
+
+**Use when:** You want to review before executing or run waves individually
+
+```bash
+# 1. Write PLAN.md
+echo "# PLAN: Your Task Here..." > PLAN.md
+
+# 2. Auto-generate setup
+paf-plan PLAN.md --live
+
+# 3. Review charter
+cat .paf/AGENT_CHARTER.md
+
+# 4. Execute manually
+paf-spawn "Wave 1" A1 A2 A3 --live
 ```
 
 ### Path 2: Manual (Full Control)
@@ -45,13 +66,18 @@ paf-spawn "Wave 1" A1 A2
 ```bash
 # Setup
 paf-init                       # Initialize .paf/ structure
-paf-plan PLAN.md               # Auto-generate setup from PLAN.md
+paf-plan PLAN.md               # Auto-generate setup (silent)
+paf-plan PLAN.md --live        # Auto-generate with live output (RECOMMENDED)
+paf-plan PLAN.md --interactive # Auto-generate with permission prompts
 paf-plan PLAN.md --dry-run     # Generate prompt only
 
 # Execution
-paf-spawn "Wave 1" A1 A2 A3    # Spawn agents in parallel
-paf-status                     # Check completion status
-paf-validate                   # Validate findings format
+paf-auto                            # Auto-execute all waves (FASTEST!)
+paf-auto --live                     # Auto-execute with live output (RECOMMENDED!)
+paf-spawn "Wave 1" A1 A2 A3         # Manually spawn specific agents (silent)
+paf-spawn "Wave 1" A1 A2 A3 --live  # Manually spawn with live output
+paf-status                          # Check completion status
+paf-validate                        # Validate findings format
 
 # Cleanup
 paf-clean                      # Remove findings/status files

@@ -281,6 +281,26 @@ fi
 python3 "$FRAMEWORK_PATH/scripts/paf_auto_planner.py" "$@"
 EOFSCRIPT
 
+# 7. paf-auto - Auto-execute all waves from charter
+cat > "$INSTALL_DIR/paf-auto" << 'EOFSCRIPT'
+#!/bin/bash
+# Automatically execute all waves from AGENT_CHARTER.md
+# Usage: paf-auto [--live]
+
+set -e
+
+PAF_CONFIG_DIR="$HOME/.config/paf"
+FRAMEWORK_PATH=$(cat "$PAF_CONFIG_DIR/framework_path" 2>/dev/null)
+
+if [ -z "$FRAMEWORK_PATH" ]; then
+    echo "Error: PAF not installed. Run install.sh first."
+    exit 1
+fi
+
+# Run the auto executor
+"$FRAMEWORK_PATH/scripts/auto_execute_waves.sh" "$@"
+EOFSCRIPT
+
 # Make all scripts executable
 chmod +x "$INSTALL_DIR/paf-init"
 chmod +x "$INSTALL_DIR/paf-spawn"
@@ -288,11 +308,13 @@ chmod +x "$INSTALL_DIR/paf-status"
 chmod +x "$INSTALL_DIR/paf-validate"
 chmod +x "$INSTALL_DIR/paf-clean"
 chmod +x "$INSTALL_DIR/paf-plan"
+chmod +x "$INSTALL_DIR/paf-auto"
 
 echo "✅ Installed commands:"
 echo "   • paf-init      - Initialize PAF in current directory"
 echo "   • paf-plan      - Auto-generate PAF setup from PLAN.md"
-echo "   • paf-spawn     - Spawn a wave of agents"
+echo "   • paf-auto      - Auto-execute all waves from charter"
+echo "   • paf-spawn     - Spawn a wave of agents (manual)"
 echo "   • paf-status    - Check agent completion status"
 echo "   • paf-validate  - Validate findings format"
 echo "   • paf-clean     - Clean execution artifacts"
@@ -309,9 +331,12 @@ INITIALIZATION:
 AUTO-PLANNING (NEW!):
   paf-plan PLAN.md            Auto-generate PAF setup from PLAN.md
   paf-plan PLAN.md --dry-run  Generate prompt only, don't run agent
+  paf-plan PLAN.md --live     Generate with live output
 
 EXECUTION:
-  paf-spawn "Wave 1" A1 A2 A3 Spawn agents A1, A2, A3 in parallel
+  paf-auto                    Auto-execute all waves from charter
+  paf-auto --live             Auto-execute with live output
+  paf-spawn "Wave 1" A1 A2 A3 Manually spawn specific agents
   paf-status                  Check completion status of all agents
   paf-validate                Validate findings format
 
@@ -336,11 +361,18 @@ WORKFLOW (Manual):
   7. paf-validate
   8. Synthesize findings into final plan
 
-WORKFLOW (Auto-Planned):
+WORKFLOW (Fully Automated - FASTEST):
+  1. Create PLAN.md with your task description
+  2. paf-plan PLAN.md --live      (auto-generates all PAF files)
+  3. paf-auto --live              (auto-executes all waves)
+  4. paf-validate
+  5. Review findings and synthesize
+
+WORKFLOW (Semi-Automated):
   1. Create PLAN.md with your task description
   2. paf-plan PLAN.md             (auto-generates all PAF files)
   3. Review .paf/AGENT_CHARTER.md and .paf/DEPENDENCY_DAG.md
-  4. paf-spawn "Wave 1" <agents>  (check charter for wave structure)
+  4. paf-spawn "Wave 1" <agents>  (manual execution)
   5. paf-status
   6. paf-validate
   7. Synthesize findings into final plan
