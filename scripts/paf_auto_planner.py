@@ -33,6 +33,11 @@ Analyze the provided PLAN.md file and automatically generate a complete Parallel
 3. **Many Agents**: Aim for 5-15 agents total (more is better for parallelization)
 4. **Smart Waves**: Group independent tasks in the same wave, dependent tasks in later waves
 5. **Clear Dependencies**: Only create dependencies when truly necessary (data from one task needed by another)
+6. **🔴 IMPLEMENTATION AGENTS**: After analysis/design waves, create waves where agents **ACTUALLY WRITE CODE**
+   - Implementation agent prompts MUST say "Use Write tool to create <filename>"
+   - Implementation agent prompts MUST say "Use Edit tool to modify <filename>"
+   - Implementation agents must NOT create checklists or plans - they must write actual code
+   - The `-p` mode supports Write/Edit tools - agents CAN and SHOULD write files
 
 ## Context Files You MUST Read First
 
@@ -113,15 +118,26 @@ You must create the following files in the project directory:
 ### Task Decomposition Strategy
 1. **Analysis Tasks**: What exists? What's the current state?
 2. **Design Tasks**: How should it work? What's the approach?
-3. **Implementation Tasks**: What code changes are needed?
-4. **Testing Tasks**: How do we verify it works?
-5. **Documentation Tasks**: What docs need updating?
+3. **Implementation Tasks**: **WRITE ACTUAL CODE FILES** (use Write/Edit tools)
+4. **Testing Tasks**: Write and run tests
+5. **Documentation Tasks**: Update documentation files
+
+**CRITICAL FOR IMPLEMENTATION TASKS**:
+- Agent prompt MUST say "IMPLEMENT by writing code files"
+- Agent prompt MUST say "Use Write tool to create files"
+- Agent prompt MUST say "Use Edit tool to modify existing files"
+- Agent prompt must NOT say "create a checklist" or "plan implementation"
+- Agent output should be actual code files, not markdown checklists
 
 ### Wave Organization Strategy
 - **Wave 1**: All independent analysis/investigation tasks
 - **Wave 2**: Design tasks that need analysis results
-- **Wave 3**: Implementation planning that needs design
-- **Wave 4**: Testing/validation planning (if needed)
+- **Wave 3**: **IMPLEMENTATION** tasks that need design (ACTUALLY WRITE CODE)
+- **Wave 4**: Testing/validation tasks (if needed)
+- **Wave 5**: Integration/deployment (if needed)
+
+**CRITICAL**: Wave 3+ agents must IMPLEMENT code, not create checklists.
+Use Write/Edit tools to create actual files.
 
 ### Context File Selection
 For each agent, identify the SPECIFIC files they need to read:
@@ -140,19 +156,36 @@ For each agent, identify the SPECIFIC files they need to read:
 
 **Wave 1 (Independent Analysis):**
 - A1: Analyze current user data models
+  Task: Read existing code, output analysis
 - A2: Research auth libraries and frameworks available
+  Task: Research options, output recommendations
 - A3: Analyze existing API endpoint patterns
+  Task: Read code, output pattern analysis
 - A4: Review current security practices in codebase
+  Task: Read code, output security assessment
 
 **Wave 2 (Design, depends on Wave 1):**
 - A5: Design user/session database schema (needs A1)
+  Task: Read A1 findings, output schema design
 - A6: Design authentication API endpoints (needs A2, A3)
+  Task: Read A2/A3 findings, output API design
 - A7: Design password security strategy (needs A2, A4)
+  Task: Read A2/A4 findings, output security design
 - A8: Design session management approach (needs A2, A4)
+  Task: Read A2/A4 findings, output session design
 
-**Wave 3 (Implementation Planning, depends on Wave 2):**
-- A9: Create backend implementation task list (needs A5, A6, A7, A8)
-- A10: Create frontend integration task list (needs A6, A8)
+**Wave 3 (IMPLEMENTATION, depends on Wave 2):**
+- A9: **IMPLEMENT user/session models** (needs A5)
+  Task: Read A5 design, **USE WRITE TOOL** to create models/user.py
+- A10: **IMPLEMENT auth endpoints** (needs A6)
+  Task: Read A6 design, **USE WRITE TOOL** to create routes/auth.py
+- A11: **IMPLEMENT password hashing** (needs A7)
+  Task: Read A7 design, **USE WRITE TOOL** to create utils/crypto.py
+- A12: **IMPLEMENT session middleware** (needs A8)
+  Task: Read A8 design, **USE WRITE TOOL** to create middleware/session.py
+
+**CRITICAL**: A9-A12 prompts MUST say "Use Write tool to create file X"
+and "Use Edit tool to modify file Y". Do NOT say "create checklist".
 
 ## Success Criteria
 - [ ] Generated AGENT_CHARTER.md with 5-15 agents
