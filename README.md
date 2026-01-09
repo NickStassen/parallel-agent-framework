@@ -22,7 +22,7 @@ The Parallel Agent Framework (PAF) enables you to decompose complex tasks into 3
 
 After installing PAF commands (see Installation above):
 
-### Option 1: Auto-Planned Setup (Recommended) ⚡ NEW!
+### Option 1: Fully Automated (Fastest!) ⚡ NEW!
 
 ```bash
 cd ~/your-project
@@ -34,23 +34,45 @@ cat > PLAN.md << 'EOF'
 Implement login, logout, and session management...
 EOF
 
-# 2. Auto-generate PAF setup (creates 5-15 agents automatically!)
-paf-plan PLAN.md
+# 2. Auto-generate PAF setup + execute all waves (completely automated!)
+paf-plan PLAN.md --live    # Generate setup (watch it happen)
+paf-auto --live            # Execute all waves automatically (watch progress)
+
+# 3. Review results
+paf-validate
+cat .paf/findings/*.md
+```
+
+**Time saved:** 30-40 minutes vs manual setup!
+**Fully automated:** No manual wave execution needed!
+
+### Option 2: Semi-Automated (More Control)
+
+```bash
+cd ~/your-project
+
+# 1. Create PLAN.md
+cat > PLAN.md << 'EOF'
+# PLAN: Add User Authentication
+...
+EOF
+
+# 2. Auto-generate PAF setup
+paf-plan PLAN.md --live
 
 # 3. Review generated files
 cat .paf/AGENT_CHARTER.md
 
-# 4. Execute waves (check charter for agent IDs)
-paf-spawn "Wave 1" A1 A2 A3 A4
+# 4. Manually execute specific waves
+paf-spawn "Wave 1" A1 A2 A3 A4 --live
 paf-status
-paf-spawn "Wave 2" A5 A6
+paf-spawn "Wave 2" A5 A6 --live
 paf-validate
 
 # 5. Synthesize results
 cat .paf/findings/*.md
 ```
 
-**Time saved:** 20-30 minutes vs manual setup!
 **See:** [docs/AUTO_PLANNING.md](./docs/AUTO_PLANNING.md) for detailed guide
 
 ### Option 2: Manual Setup (Traditional)
@@ -200,7 +222,8 @@ paf-init
 This installs these commands system-wide:
 - `paf-init` - Initialize PAF in current directory
 - `paf-plan` - **NEW!** Auto-generate PAF setup from PLAN.md
-- `paf-spawn` - Spawn agent waves
+- `paf-auto` - **NEW!** Auto-execute all waves from charter
+- `paf-spawn` - Manually spawn specific agent waves
 - `paf-status` - Check completion status
 - `paf-validate` - Validate findings
 - `paf-clean` - Clean execution artifacts

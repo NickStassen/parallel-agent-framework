@@ -162,6 +162,39 @@ This creates `.paf/PLANNER_AGENT_PROMPT.md` that you can:
 - Modify if needed
 - Run manually: `claude -p "$(cat .paf/PLANNER_AGENT_PROMPT.md)"`
 
+### Live Mode (Recommended for Monitoring)
+
+Stream the agent's output in real-time to see what it's thinking and doing:
+
+```bash
+paf-plan PLAN.md --live
+```
+
+**What you'll see:**
+- Agent's thought process in real-time
+- Files being read and analyzed
+- Tasks being created
+- Files being written
+- Any errors or issues immediately
+
+**When to use:**
+- First time using auto-planning (see how it works)
+- Debugging issues
+- Want to know if agent is making progress
+- Large/complex PLAN.md files
+
+### Interactive Mode
+
+Run the agent interactively (useful for controlling permissions):
+
+```bash
+paf-plan PLAN.md --interactive
+```
+
+**Note:** By default, `paf-plan` runs in automated mode with `--dangerously-skip-permissions`
+to prevent hanging on permission prompts. In interactive mode, you'll be asked to approve
+file reads/writes.
+
 ### Custom Project Directory
 
 ```bash
@@ -323,10 +356,32 @@ cd parallel-agent-framework
 
 ### "Agent timed out"
 
-Increase timeout:
+**Possible causes:**
+- Agent stuck waiting for permission prompts (shouldn't happen in automated mode)
+- Task is too complex
+- Network issues
+
+**Solutions:**
 ```bash
+# Try with interactive mode to see what's happening
+paf-plan PLAN.md --interactive
+
+# Or increase timeout
 paf-plan PLAN.md --timeout 3600
+
+# Or reduce timeout to fail faster
+paf-plan PLAN.md --timeout 600
 ```
+
+### Agent seems to hang
+
+The automated mode uses `--dangerously-skip-permissions` to prevent hanging on permission
+prompts. If you suspect the agent is stuck:
+
+1. Wait for the timeout (default 30 min)
+2. Check `.paf/PLANNER_OUTPUT.md` for any partial output
+3. Try `--interactive` mode to see what's happening
+4. Check your network connection
 
 ### Generated files don't look right
 
