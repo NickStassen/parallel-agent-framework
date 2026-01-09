@@ -290,4 +290,4 @@ MIT License - See LICENSE file for details
 
 **Framework Version:** 2.0
 **Last Updated:** 2026-01-08
-**Maintained By:** [Your Name/Org]
+**Maintained By:** Nick Stassen
